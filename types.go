@@ -9,6 +9,9 @@ type Book struct {
 	NumHighlights   int    `json:"num_highlights"`
 	LastHighlightAt string `json:"last_highlight_at"`
 	Updated         string `json:"updated"`
+	CoverImageURL   string `json:"cover_image_url"`
+	HighlightsURL   string `json:"highlights_url"`
+	SourceURL       string `json:"source_url"`
 }
 
 type BookList struct {
@@ -30,10 +33,15 @@ type HighightList struct {
 }
 
 type Highlight struct {
-	Text          string `json:"text"`
-	ID            int    `json:"id"`
-	Location      int    `json:"location"`
-	LocationType  string `json:"location_type"`
-	HighlightedAt string `json:"highlighted_at"`
-	BookID        int    `json:"book_id"`
+	Text          string   `json:"text"`
+	ID            int      `json:"id"`
+	Note          string   `json:"note"`
+	Location      int      `json:"location"`
+	LocationType  string   `json:"location_type"`
+	HighlightedAt string   `json:"highlighted_at"`
+	BookID        int      `json:"book_id"`
+	URL           string   `json:"url"`
+	Color         string   `json:"color"`
+	Updated       string   `json:"updated"`
+	Tags          []string `json:"tags"`
 }
