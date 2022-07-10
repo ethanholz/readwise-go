@@ -32,6 +32,24 @@ type HighightList struct {
 	Results  []Highlight `json:"results"`
 }
 
+type NewHighlights struct {
+	Highlights []NewHighlight `json:"highlights"`
+}
+
+type NewHighlight struct {
+	Text          string `json:"text"`
+	Title         string `json:"title"`
+	Author        string `json:"author"`
+	ImageURL      string `json:"image_url"`
+	SourceURL     string `json:"source_url"`
+	Category      string `json:"category"`
+	Note          string `json:"note"`
+	Location      string `json:"location"`
+	LocationType  string `json:"location_type"`
+	HighlightedAt string `json:"highlighted_at"`
+	HighlightURL  string `json:"highlight_url"`
+}
+
 type Highlight struct {
 	Text          string   `json:"text"`
 	ID            int      `json:"id"`
