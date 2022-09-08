@@ -3,22 +3,22 @@ package readwise
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 )
 
-type ReadwiseInstance struct {
+type Instance struct {
 	key  string
 	http *http.Client
 }
 
 // Creates a new Readwise Instance
 // By default uses READWISE_KEY environment variable
-func New() *ReadwiseInstance {
-	instance := &ReadwiseInstance{
+func New() *Instance {
+	instance := &Instance{
 		key:  os.Getenv("READWISE_KEY"),
 		http: &http.Client{},
 	}
@@ -26,8 +26,54 @@ func New() *ReadwiseInstance {
 	return instance
 }
 
+type listable interface {
+	BookList | HighightList
+}
+
+func getList[T listable](instance *Instance) (*T, *error) {
+	var list T
+	var endpoint string
+	switch any(list).(type) {
+	case BookList:
+		endpoint = "https://readwise.io/api/v2/books/"
+	case HighightList:
+		endpoint = "https://readwise.io/api/v2/highlights/"
+	}
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, &err
+	}
+	req.Header.Add("Authorization", "Token "+instance.key)
+	resp, err := instance.http.Do(req)
+	if err != nil {
+		return nil, &err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &err
+	}
+
+	err = json.Unmarshal(body, &list)
+	if err != nil {
+		return nil, &err
+	}
+
+	return &list, nil
+}
+
+func (instance *Instance) GetHighlightList() (*HighightList, *error) {
+	return getList[HighightList](instance)
+}
+
+func (instance *Instance) GetBookList() (*BookList, *error) {
+	return getList[BookList](instance)
+}
+
 // Returns a highlight list with a given book id
-func (instance *ReadwiseInstance) GetHighlightsForBook(id int) (*HighightList, *error) {
+func (instance *Instance) GetHighlightsForBook(id int) (*HighightList, *error) {
 	URL := "https://readwise.io/api/v2/highlights/?"
 	payload := url.Values{}
 	payload.Add("book_id", strconv.Itoa(id))
@@ -41,7 +87,7 @@ func (instance *ReadwiseInstance) GetHighlightsForBook(id int) (*HighightList, *
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, &err
 	}
@@ -54,70 +100,13 @@ func (instance *ReadwiseInstance) GetHighlightsForBook(id int) (*HighightList, *
 	return &highlightList, nil
 }
 
-func (instance *ReadwiseInstance) GetHighlightList() (*HighightList, *error) {
-	URL := "https://readwise.io/api/v2/highlights/"
-	req, err := http.NewRequest("GET", URL, nil)
-	if err != nil {
-		return nil, &err
-	}
-	req.Header.Add("Authorization", "Token "+instance.key)
-	resp, err := instance.http.Do(req)
-	if err != nil {
-		return nil, &err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, &err
-	}
-
-	var list HighightList
-	err = json.Unmarshal(body, &list)
-	if err != nil {
-		return nil, &err
-	}
-
-	return &list, nil
-}
-
-func (instance *ReadwiseInstance) GetBookList() (*BookList, *error) {
-	URL := "https://readwise.io/api/v2/books/"
-	req, err := http.NewRequest("GET", URL, nil)
-	if err != nil {
-		return nil, &err
-	}
-	req.Header.Add("Authorization", "Token "+instance.key)
-	resp, err := instance.http.Do(req)
-	if err != nil {
-		return nil, &err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, &err
-	}
-
-	var list BookList
-	err = json.Unmarshal(body, &list)
-	if err != nil {
-		panic(err)
-	}
-
-	return &list, nil
-}
-
-func (instance *ReadwiseInstance) CreateHighlight(highlight NewHighlight) *error {
+func (instance *Instance) CreateHighlight(highlight NewHighlight) *error {
 	URL := "https://readwise.io/api/v2/books/"
 	body, err := json.Marshal(highlight)
 	if err != nil {
 		return &err
 	}
 	req, err := http.NewRequest("POST", URL, bytes.NewBuffer(body))
-
 	if err != nil {
 		return &err
 	}
