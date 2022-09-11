@@ -26,8 +26,47 @@ func New() *Instance {
 	return instance
 }
 
-type listable interface {
-	BookList | HighightList
+func getTags[T tagable](instance *Instance, id int) (*T, *error) {
+	var tags T
+	var endpoint string
+	switch any(tags).(type) {
+	case BookTags:
+		endpoint = "https://readwise.io/api/v2/books/"
+	case HighlightTags:
+		endpoint = "https://readwise.io/api/v2/highlights/"
+	}
+	endpoint += strconv.Itoa(id) + "/tags"
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, &err
+	}
+	req.Header.Add("Authorization", "Token "+instance.key)
+	resp, err := instance.http.Do(req)
+	if err != nil {
+		return nil, &err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &err
+	}
+
+	err = json.Unmarshal(body, &tags)
+	if err != nil {
+		return nil, &err
+	}
+
+	return &tags, nil
+}
+
+func (instance *Instance) GetHighlightTags(id int) (*HighlightTags, *error) {
+	return getTags[HighlightTags](instance, id)
+}
+
+func (instance *Instance) GetBookTags(id int) (*BookTags, *error) {
+	return getTags[BookTags](instance, id)
 }
 
 func getList[T listable](instance *Instance) (*T, *error) {
@@ -36,7 +75,7 @@ func getList[T listable](instance *Instance) (*T, *error) {
 	switch any(list).(type) {
 	case BookList:
 		endpoint = "https://readwise.io/api/v2/books/"
-	case HighightList:
+	case HighlightList:
 		endpoint = "https://readwise.io/api/v2/highlights/"
 	}
 	req, err := http.NewRequest("GET", endpoint, nil)
@@ -64,8 +103,8 @@ func getList[T listable](instance *Instance) (*T, *error) {
 	return &list, nil
 }
 
-func (instance *Instance) GetHighlightList() (*HighightList, *error) {
-	return getList[HighightList](instance)
+func (instance *Instance) GetHighlightList() (*HighlightList, *error) {
+	return getList[HighlightList](instance)
 }
 
 func (instance *Instance) GetBookList() (*BookList, *error) {
@@ -73,7 +112,7 @@ func (instance *Instance) GetBookList() (*BookList, *error) {
 }
 
 // Returns a highlight list with a given book id
-func (instance *Instance) GetHighlightsForBook(id int) (*HighightList, *error) {
+func (instance *Instance) GetHighlightsForBook(id int) (*HighlightList, *error) {
 	URL := "https://readwise.io/api/v2/highlights/?"
 	payload := url.Values{}
 	payload.Add("book_id", strconv.Itoa(id))
@@ -91,7 +130,7 @@ func (instance *Instance) GetHighlightsForBook(id int) (*HighightList, *error) {
 	if err != nil {
 		return nil, &err
 	}
-	var highlightList HighightList
+	var highlightList HighlightList
 	err = json.Unmarshal(body, &highlightList)
 	if err != nil {
 		return nil, &err

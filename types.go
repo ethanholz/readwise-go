@@ -25,7 +25,7 @@ type BookReq struct {
 	BookID int `json:"book_id"`
 }
 
-type HighightList struct {
+type HighlightList struct {
 	Count    int         `json:"count"`
 	Next     string      `json:"next"`
 	Previous string      `json:"previous"`
@@ -63,3 +63,27 @@ type Highlight struct {
 	Updated       string   `json:"updated"`
 	Tags          []string `json:"tags"`
 }
+
+type listable interface {
+	BookList | HighlightList
+}
+
+type tagable interface {
+	BookTags | HighlightTags
+}
+
+type Tags struct {
+	Count   int    `json:"count"`
+	Next    string `json:"next"`
+	Results []Tag  `json:"results"`
+}
+
+type Tag struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type (
+	BookTags      Tags
+	HighlightTags Tags
+)
