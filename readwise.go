@@ -2,6 +2,7 @@ package readwise
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 type Instance struct {
 	key  string
 	http *http.Client
+	ctx  context.Context
 }
 
 // Creates a new Readwise Instance
@@ -21,6 +23,7 @@ func New() *Instance {
 	instance := &Instance{
 		key:  os.Getenv("READWISE_KEY"),
 		http: &http.Client{},
+		ctx:  context.Background(),
 	}
 
 	return instance
@@ -36,7 +39,7 @@ func getTags[T tagable](instance *Instance, id int) (*T, *error) {
 		endpoint = "https://readwise.io/api/v2/highlights/"
 	}
 	endpoint += strconv.Itoa(id) + "/tags"
-	req, err := http.NewRequest("GET", endpoint, nil)
+	req, err := http.NewRequestWithContext(instance.ctx, "GET", endpoint, nil)
 	if err != nil {
 		return nil, &err
 	}
@@ -78,7 +81,7 @@ func getList[T listable](instance *Instance) (*T, *error) {
 	case HighlightList:
 		endpoint = "https://readwise.io/api/v2/highlights/"
 	}
-	req, err := http.NewRequest("GET", endpoint, nil)
+	req, err := http.NewRequestWithContext(instance.ctx, "GET", endpoint, nil)
 	if err != nil {
 		return nil, &err
 	}
@@ -116,7 +119,7 @@ func (instance *Instance) GetHighlightsForBook(id int) (*HighlightList, *error) 
 	URL := "https://readwise.io/api/v2/highlights/?"
 	payload := url.Values{}
 	payload.Add("book_id", strconv.Itoa(id))
-	req, _ := http.NewRequest("GET", URL+payload.Encode(), nil)
+	req, _ := http.NewRequestWithContext(instance.ctx, "GET", URL+payload.Encode(), nil)
 	req.Header.Add("Authorization", "Token "+instance.key)
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := instance.http.Do(req)
@@ -145,7 +148,7 @@ func (instance *Instance) CreateHighlight(highlight NewHighlight) *error {
 	if err != nil {
 		return &err
 	}
-	req, err := http.NewRequest("POST", URL, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(instance.ctx, "POST", URL, bytes.NewBuffer(body))
 	if err != nil {
 		return &err
 	}
