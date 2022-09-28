@@ -51,17 +51,17 @@ type NewHighlight struct {
 }
 
 type Highlight struct {
-	Text          string   `json:"text"`
-	ID            int      `json:"id"`
-	Note          string   `json:"note"`
-	Location      int      `json:"location"`
-	LocationType  string   `json:"location_type"`
-	HighlightedAt string   `json:"highlighted_at"`
-	BookID        int      `json:"book_id"`
-	URL           string   `json:"url"`
-	Color         string   `json:"color"`
-	Updated       string   `json:"updated"`
-	Tags          []string `json:"tags"`
+	Text          string `json:"text"`
+	ID            int    `json:"id"`
+	Note          string `json:"note"`
+	Location      int    `json:"location"`
+	LocationType  string `json:"location_type"`
+	HighlightedAt string `json:"highlighted_at"`
+	BookID        int    `json:"book_id"`
+	URL           string `json:"url"`
+	Color         string `json:"color"`
+	Updated       string `json:"updated"`
+	Tags          []Tag  `json:"tags"`
 }
 
 type listable interface {
